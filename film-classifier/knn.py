@@ -33,10 +33,12 @@ def medir_exactitud(vecinos, y_train, y_dev, k) -> float:
     predicciones = moda_cada_elemento(vecinos, y_train, k)
     correctas = contar_predicciones_correctas(predicciones, y_dev)
     totales = len(y_dev)
+    # print(predicciones)
+    # print(correctas)
     return correctas / totales
 
 
-def normalize_data(data):
-    train_normas = np.diag(1 / np.linalg.norm(data, axis=1))
-    train_normalized = train_normas @ data
+def normalize_data(train_data):
+    train_normas = np.diag(1 / np.linalg.norm(train_data, axis=1))
+    train_normalized = train_normas @ train_data
     return train_normalized
