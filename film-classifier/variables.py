@@ -4,3 +4,5 @@ genre_name = [
     "science fiction",
     "western",
 ]
+
+default_Q = 1000

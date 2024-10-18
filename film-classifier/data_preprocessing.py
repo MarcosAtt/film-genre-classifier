@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
+from pca import *
 from variables import *
+from cross_validation import *
 
 
 def import_data():
@@ -33,3 +35,53 @@ def document_term_matrix(df, Q):
             y_test[itest] = genre_name.index(row["Genre"])
             itest += 1
     return X_train, y_train, X_test, y_test
+
+
+def precomputar_folds_covMatEVD():
+    """
+    Returns V_folds[i] = covMatEvd(X_fold[i]).V
+    """
+    data = document_term_matrix(import_data(), default_Q)
+    X_train = data[0]
+    y_train = data[1]
+    X_train, y_train = balancear_clases(X_train, y_train)
+    V_folds = []
+    for i in range(5):
+        X_newtrain, X_dev, y_newtrain, y_dev = separate_dev_data(X_train, y_train, i)
+        S, V = covarianceMatrixEVD(X_newtrain, 100, 1e-7)
+        V_folds.append(V)
+    return V_folds
+
+
+def save_variable(var, filename):
+    filename += ".pkl"
+    with open(filename, "wb") as f:
+        pickle.dump(var, f)
+
+
+def load_variable(filename):
+    """Returns variable from filename.pkl"""
+    filename += ".pkl"
+    with open(filename, "rb") as f:
+        var = pickle.load(f)
+    return var
+
+
+# Save and load covariance matrix to disk
+def save_folds_covMatEVD(V_folds):
+    save_variable(V_folds, "folds_cov_mat_evd")
+
+
+def load_folds_covMatEVD():
+    """Returns V_folds"""
+    try:
+        V_folds = load_variable("V_folds")
+    except:
+        print("No hay archivo con el precalculo de PCA, calculando...")
+        V_folds = precomputar_folds_covMatEVD()
+        save_variable(V_folds, "V_folds")
+    return V_folds
+
+
+def save_promedios_k_p_exa(promedios_p_k):
+    save_variable(promedios_p_k, "promedios_p_k_exactitud")

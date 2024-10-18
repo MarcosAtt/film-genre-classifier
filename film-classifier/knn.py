@@ -19,7 +19,8 @@ def calcular_vecinos(X_train, X_dev):
     return vecinos
 
 
-def moda_cada_elemento(vecinos, y_train, k):
+def clasificar(vecinos, y_train, k):
+    # En cada elemento devuelve la moda correspondiente
     modas = stats.mode(y_train[vecinos[::, :k]], axis=1)[0]
     return modas
 
@@ -30,11 +31,9 @@ def contar_predicciones_correctas(guesses, y_dev):
 
 
 def medir_exactitud(vecinos, y_train, y_dev, k) -> float:
-    predicciones = moda_cada_elemento(vecinos, y_train, k)
+    predicciones = clasificar(vecinos, y_train, k)
     correctas = contar_predicciones_correctas(predicciones, y_dev)
     totales = len(y_dev)
-    # print(predicciones)
-    # print(correctas)
     return correctas / totales
 
 
