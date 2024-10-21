@@ -13,9 +13,19 @@ def distancia_coseno(dev, train):
     return np.ones((len(dev), len(train))) - dev @ train.T
 
 
-def calcular_vecinos(X_train, X_dev):
-    distancias = distancia_coseno(X_dev, X_train)  # TODO: generalizar
+def distancia_euclidea(A, B):
+    dist = np.zeros((len(A), len(B)), dtype=float)
+    for i in range(len(A)):
+        for j in range(len(B)):
+            dist[i, j] = np.linalg.norm(A[i, :] - B[j, :])
+
+    return dist
+
+
+def calcular_vecinos(X_train, X_dev, dist_cos=True):
+    distancias = distancia_coseno(X_dev, X_train)
     vecinos = np.argsort(distancias, axis=1)  # Ordenar por distancia
+    print(distancias.shape)
     return vecinos
 
 
@@ -38,6 +48,6 @@ def medir_exactitud(vecinos, y_train, y_dev, k) -> float:
 
 
 def normalize_data(train_data):
-    train_normas = np.diag(1 / np.linalg.norm(train_data, axis=1))
+    train_normas = np.diag((1 + 1) / (np.linalg.norm(train_data, axis=1) + 1))
     train_normalized = train_normas @ train_data
     return train_normalized

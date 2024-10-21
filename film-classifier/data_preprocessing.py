@@ -1,52 +1,117 @@
 import pandas as pd
 import numpy as np
-from pca import *
-from variables import *
-from cross_validation import *
+from pca import *  # noqa: F403
+from variables import *  # noqa: F403
+import pickle
+import math
 
 
 def import_data():
     return pd.read_csv("../data/raw/wiki_movie_plots_deduped_sample.csv")
 
 
-def document_term_matrix(df, Q):
+def balancear_clases(a, b):
+    """Reordenar ambos arrays de la misma manera"""
+    p = np.random.default_rng(seed=default_seed).permutation(len(a))
+    return a[p], b[p]
+
+
+def separate_test_data(df):
+    df = df.filter(items=["Genre", "tokens", "split"])
+    df_train = df[df["split"] == "train"]
+    df_test = df[df["split"] == "test"]
+    return df_train, df_test
+
+
+def separate_dev_data(X_train, y_train, i):
+    part = X_train.shape[0] // 4  # Partition size
+    X_dev = X_train[part * i : part * (i + 1)]
+    y_dev = y_train[part * i : part * (i + 1)]
+
+    X_newtrain = np.concatenate((X_train[0 : part * i], X_train[part * (i + 1) : :]))
+    y_newtrain = np.concatenate((y_train[0 : part * i], y_train[part * (i + 1) : :]))
+    return X_newtrain, X_dev, y_newtrain, y_dev
+
+
+def vocabulary(df, Q):
     tokens = np.hstack(df["tokens"].apply(lambda x: x.split()).values)
     unique_tokens = pd.Series(tokens).value_counts().index[:Q].values
     unique_tokens_dict = dict(zip(unique_tokens, range(len(unique_tokens))))
+    return unique_tokens_dict
 
-    X_train = np.zeros((320, len(unique_tokens)), dtype=int)
-    X_test = np.zeros((80, len(unique_tokens)), dtype=int)
-    y_train = np.zeros((320, 1), dtype=int)
-    y_test = np.zeros((80, 1), dtype=int)
-    itrain = 0
-    itest = 0
 
+def document_term_matrix(df, Q):
+    """Defined as raw count of tokens"""
+    unique_tokens_dict = vocabulary(df, Q)
+    unique_t_number = len(unique_tokens_dict.keys())
+
+    X = np.zeros((len(df), unique_t_number), dtype=int)  # Term frequency per document
+    y = np.zeros((len(df), 1), dtype=int)  # Document genre
+    index = 0
     for i, row in df.iterrows():
-        if row["split"] == "train":
-            for token in row["tokens"].split():
-                if unique_tokens_dict.get(token, False) is not False:
-                    X_train[itrain, unique_tokens_dict[token]] += 1
-            y_train[itrain] = genre_name.index(row["Genre"])
-            itrain += 1
-        else:
-            for token in row["tokens"].split():
-                if unique_tokens_dict.get(token, False) is not False:
-                    X_test[itest, unique_tokens_dict[token]] += 1
-            y_test[itest] = genre_name.index(row["Genre"])
-            itest += 1
-    return X_train, y_train, X_test, y_test
+        for token in row["tokens"].split():
+            if unique_tokens_dict.get(token, False) is not False:
+                X[index, unique_tokens_dict[token]] += 1
+        y[index] = genre_name.index(row["Genre"])
+        index += 1
+    return X, y
 
 
-def precomputar_folds_covMatEVD():
+def test_document_term_matrix(df_test, df_train, Q):
+    """Defined as raw count of tokens"""
+    unique_tokens_dict = vocabulary(df_train, Q)
+    unique_t_number = len(unique_tokens_dict.keys())
+    X = np.zeros(
+        (len(df_test), unique_t_number), dtype=int
+    )  # Term frequency per document
+    y = np.zeros((len(df_test), 1), dtype=int)  # Document genre
+    index = 0
+    for i, row in df_test.iterrows():
+        for token in row["tokens"].split():
+            if unique_tokens_dict.get(token):
+                X[index, unique_tokens_dict[token]] += 1
+        y[index] = genre_name.index(row["Genre"])
+        index += 1
+    return X, y
+
+
+def inverse_document_frequency_matrix(df, Q):
+    N = len(df)  # Number of documents
+    """Defined as log ((|df| + 1) / (t in d : d in df))"""
+    unique_tokens_dict = vocabulary(df, Q)
+    unique_t_number = len(unique_tokens_dict.keys())
+
+    term_aparitions = np.zeros(
+        (len(df), unique_t_number), dtype=int
+    )  # Term frequency per document
+    index = 0
+    for i, row in df.iterrows():
+        for token in row["tokens"].split():
+            if unique_tokens_dict.get(token):
+                term_aparitions[index, unique_tokens_dict[token]] += 1
+        index += 1
+
+    term_aparitions[term_aparitions > 0] = 1
+    term_aparitions = term_aparitions.sum(axis=0)
+
+    idf = np.zeros((unique_t_number, 1), dtype=float)
+    for i in range(len(term_aparitions)):
+        idf[i] = math.log((N + 1) / (term_aparitions[i] + 1))
+
+    return idf
+
+
+def tf_idf(df, Q):
+    pass
+
+
+def precomputar_folds_covMatEVD(X_train, y_train):
     """
     Returns V_folds[i] = covMatEvd(X_fold[i]).V
     """
-    data = document_term_matrix(import_data(), default_Q)
-    X_train = data[0]
-    y_train = data[1]
-    X_train, y_train = balancear_clases(X_train, y_train)
     V_folds = []
     for i in range(5):
+        print_avance(i, 0, 5, 1)
         X_newtrain, X_dev, y_newtrain, y_dev = separate_dev_data(X_train, y_train, i)
         S, V = covarianceMatrixEVD(X_newtrain, 100, 1e-7)
         V_folds.append(V)
