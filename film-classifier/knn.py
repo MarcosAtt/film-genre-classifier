@@ -23,9 +23,12 @@ def distancia_euclidea(A, B):
 
 
 def calcular_vecinos(X_train, X_dev, dist_cos=True):
-    distancias = distancia_coseno(X_dev, X_train)
+    distancias = 0
+    if dist_cos:
+        distancias = distancia_coseno(X_dev, X_train)
+    else:
+        distancias = distancia_euclidea(X_dev, X_train)
     vecinos = np.argsort(distancias, axis=1)  # Ordenar por distancia
-    print(distancias.shape)
     return vecinos
 
 

@@ -1,8 +1,9 @@
 import numpy as np
-from knn import *
-from pca import *
-from variables import *
-from data_preprocessing import *
+
+from data_preprocessing import *  # noqa: F403
+from knn import *  # noqa: F403
+from pca import *  # noqa: F403
+from variables import *  # noqa: F403
 
 
 def four_fold_cross_validation_k_exploration(X_train, y_train, maxK, dist_cos=True):

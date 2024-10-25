@@ -1,9 +1,11 @@
-import pandas as pd
+import math
+import pickle
+
 import numpy as np
+import pandas as pd
+
 from pca import *  # noqa: F403
 from variables import *  # noqa: F403
-import pickle
-import math
 
 
 def import_data():
@@ -141,11 +143,9 @@ def load_folds_covMatEVD():
     """Returns V_folds"""
     try:
         V_folds = load_variable("V_folds")
+        return V_folds
     except:
         print("No hay archivo con el precalculo de PCA, calculando...")
-        V_folds = precomputar_folds_covMatEVD()
-        save_variable(V_folds, "V_folds")
-    return V_folds
 
 
 def save_promedios_k_p_exa(promedios_p_k):
