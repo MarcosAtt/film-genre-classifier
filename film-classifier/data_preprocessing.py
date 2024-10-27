@@ -107,17 +107,43 @@ def tf_idf(df, Q):
     pass
 
 
-def precomputar_folds_covMatEVD(X_train, y_train):
+def prepare_data(Q=1000):
+    df_train, df_test = separate_test_data(import_data())
+    X_train, y_train = document_term_matrix(df_train, Q)
+    X_train, y_train = balancear_clases(X_train, y_train)
+    X_test, y_test = test_document_term_matrix(df_test, df_train, Q)
+    return X_train, y_train, X_test, y_test
+
+
+def load_folds_covMatEVD():
+    """Returns V_folds, Q=1000 default"""
+    try:
+        V_folds = load_variable("V_folds")
+        return V_folds
+    except:
+        print("No hay archivo con el precalculo de PCA, calculando...")
+        V_folds = precomputar_folds_covMatEVD()
+        save_variable(V_folds, "V_folds")
+        return V_folds
+
+
+def precomputar_folds_covMatEVD():
     """
     Returns V_folds[i] = covMatEvd(X_fold[i]).V
     """
+    X_train, y_train, _, _ = prepare_data()
     V_folds = []
-    for i in range(5):
-        print_avance(i, 0, 5, 1)
+    for i in range(4):
+        print_avance(i, 0, 4, 1)
         X_newtrain, X_dev, y_newtrain, y_dev = separate_dev_data(X_train, y_train, i)
         S, V = covarianceMatrixEVD(X_newtrain, 100, 1e-7)
         V_folds.append(V)
     return V_folds
+
+
+# Save and load covariance matrix to disk
+def save_folds_covMatEVD(V_folds):
+    save_variable(V_folds, "folds_cov_mat_evd")
 
 
 def save_variable(var, filename):
@@ -132,20 +158,6 @@ def load_variable(filename):
     with open(filename, "rb") as f:
         var = pickle.load(f)
     return var
-
-
-# Save and load covariance matrix to disk
-def save_folds_covMatEVD(V_folds):
-    save_variable(V_folds, "folds_cov_mat_evd")
-
-
-def load_folds_covMatEVD():
-    """Returns V_folds"""
-    try:
-        V_folds = load_variable("V_folds")
-        return V_folds
-    except:
-        print("No hay archivo con el precalculo de PCA, calculando...")
 
 
 def save_promedios_k_p_exa(promedios_p_k):

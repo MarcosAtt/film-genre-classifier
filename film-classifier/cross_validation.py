@@ -30,7 +30,9 @@ def four_fold_cross_validation_k_exploration(X_train, y_train, maxK, dist_cos=Tr
     return promedio_aciertos_k
 
 
-def four_fold_cross_validation_k_p_exploration(V_folds, X_train, y_train, maxK, ps):
+def four_fold_cross_validation_k_p_exploration(
+    V_folds, X_train, y_train, maxK, ps, dist_cos=True
+):
     """
     V_folds: autovectores de la matriz de covarianza de cada fold de X_train,
     X_train, y_train: datos y clase correspondiente de entrenamiento,
@@ -52,7 +54,7 @@ def four_fold_cross_validation_k_p_exploration(V_folds, X_train, y_train, maxK, 
 
             pca_newtrain = reduce_dimensionality(X_newtrain_normalized, V_folds[i], p)
             pca_dev = reduce_dimensionality(X_dev_normalized, V_folds[i], p)
-            vecinos = calcular_vecinos(pca_newtrain, pca_dev)
+            vecinos = calcular_vecinos(pca_newtrain, pca_dev, dist_cos)
 
             for k in range(1, maxK):  # k neighbors
                 promedio_exactitud_p_k[j][k] += medir_exactitud(
