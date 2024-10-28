@@ -40,7 +40,7 @@ clean:
 
 .PHONY: scriptExp
 scriptExp:
-	jupyter nbconvert --to python notebooks/experimentacion.ipynb
+	jupyter nbconvert --to python notebooks/experimentos.ipynb
 
 .PHONY: bajar_bibliotecas
 bajar_bibliotecas:
